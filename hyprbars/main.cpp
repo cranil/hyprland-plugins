@@ -7,6 +7,8 @@
 #include <hyprland/src/Window.hpp>
 #include <hyprland/src/config/ConfigManager.hpp>
 
+#include <regex>
+
 #include "barDeco.hpp"
 #include "globals.hpp"
 
@@ -15,10 +17,13 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-void onNewWindow(void* self, std::any data) {
+void onNewWindow(void* self, std::any window, std::string filter = "") {
     // data is guaranteed
-    auto* const PWINDOW = std::any_cast<CWindow*>(data);
-
+    auto* const PWINDOW = std::any_cast<CWindow*>(window);
+    auto        wclass  = PWINDOW->m_szInitialClass;
+    if (std::regex_match(wclass, std::regex(filter))) {
+        return;
+    }
     if (!PWINDOW->m_bX11DoesntWantBorders) {
         std::unique_ptr<CHyprBar> bar = std::make_unique<CHyprBar>(PWINDOW);
         g_pGlobalState->bars.push_back(bar.get());
@@ -63,8 +68,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     g_pGlobalState = std::make_unique<SGlobalState>();
 
-    HyprlandAPI::registerCallbackDynamic(PHANDLE, "openWindow", [&](void* self, SCallbackInfo& info, std::any data) { onNewWindow(self, data); });
-
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_color", SConfigValue{.intValue = configStringToInt("rgba(33333388)")});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_height", SConfigValue{.intValue = 15});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:col.text", SConfigValue{.intValue = configStringToInt("rgba(ffffffff)")});
@@ -77,6 +80,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_buttons_alignment", SConfigValue{.strValue = "right"});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_padding", SConfigValue{.intValue = 7});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_button_padding", SConfigValue{.intValue = 5});
+    HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_exclude_title", SConfigValue{.strValue = ""});
+
+    HyprlandAPI::registerCallbackDynamic(PHANDLE, "openWindow", [&](void* self, SCallbackInfo& info, std::any data) { onNewWindow(self, data); });
 
     HyprlandAPI::addConfigKeyword(PHANDLE, "hyprbars-button", [&](const std::string& k, const std::string& v) { onNewButton(k, v); });
     HyprlandAPI::registerCallbackDynamic(PHANDLE, "preConfigReload", [&](void* self, SCallbackInfo& info, std::any data) { onPreConfigReload(); });
