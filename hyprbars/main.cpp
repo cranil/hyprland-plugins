@@ -20,8 +20,9 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
 void onNewWindow(void* self, std::any window, std::string filter = "") {
     // data is guaranteed
     auto* const PWINDOW = std::any_cast<CWindow*>(window);
-    auto        wclass  = PWINDOW->m_szInitialClass;
-    if (std::regex_match(wclass, std::regex(filter))) {
+    auto        wtitle  = PWINDOW->m_szInitialClass;
+    std::cout << "Window: " << wtitle << std::endl;
+    if (std::regex_match(wtitle, std::regex(filter))) {
         return;
     }
     if (!PWINDOW->m_bX11DoesntWantBorders) {
