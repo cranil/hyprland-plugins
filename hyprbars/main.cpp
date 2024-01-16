@@ -17,11 +17,13 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-void onNewWindow(void* self, std::any window, std::string filter = "") {
+void onNewWindow(void* self, std::any window) {
     // data is guaranteed
     auto* const PWINDOW = std::any_cast<CWindow*>(window);
     auto        wtitle  = PWINDOW->m_szInitialClass;
+    auto        filter  = HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_exclude_title")->strValue;
     std::cout << "Window: " << wtitle << std::endl;
+    std::cout << "Filter: " << filter << std::endl;
     if (std::regex_match(wtitle, std::regex(filter))) {
         return;
     }
